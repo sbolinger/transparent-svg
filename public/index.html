@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	
+	    <title>Node.js / S3 / SVG Investigation</title>
+	
+		<meta charset="utf-8">
+	
+		<link rel="stylesheet" type="text/css" href="stylesheets/main.css">
+
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+		
+		<script type="text/javascript">
+			$(document).ready(function() {
+				// Add change listener to compression slider
+				document.getElementById("rangeSlider").oninput = function(){			
+					document.getElementById("compressionAmount").innerHTML = this.value;
+				};
+				
+				// Create color picker
+		        var canvas = document.getElementById("colorPicker");
+		        var ctx = canvas.getContext("2d");
+
+				var image = new Image();
+				image.src = "images/color-chip.png";
+		
+				$(image).load(function() {
+					ctx.drawImage(image, 0, 0, 4, 4, 0, 0, 455, 70);
+				});
+		
+				$(canvas).click(function(e) {
+					console.log("click");
+					
+				    var canvasOffset = $(canvas).offset();
+			
+				    var canvasX = Math.floor(e.pageX - canvasOffset.left) + 1;
+				    var canvasY = Math.floor(e.pageY - canvasOffset.top) + 1;
+
+				    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+				    var pixels = imageData.data;
+				    var pixelRedIndex = ((canvasY - 1) * (imageData.width * 4)) + ((canvasX - 1) * 4);
+				    var pixelcolor = "rgba(" + pixels[pixelRedIndex] + ", " + pixels[pixelRedIndex+1] + ", " + pixels[pixelRedIndex+2] + ", " + (pixels[pixelRedIndex+3] / 255) + ")";
+
+				    $("body").css("backgroundColor", pixelcolor);
+				});
+			});
+
+			// Function called by file upload form
+			function uploadFile(){			
+				// Hide results DIV			
+				document.getElementById("results").style.display = "none";
+
+				var xhr;
+
+				if (window.XMLHttpRequest) {
+					xhr = new XMLHttpRequest();
+				} else if (window.ActiveXObject) {
+					xhr = new ActiveXObject("Msxml2.XMLHTTP");
+				} else {
+					throw new Error("Ajax is not supported by your browser");
+				}
+
+				// Code executed once a reply has been received from the file upload form submission
+				xhr.onreadystatechange = function () {
+					if (xhr.readyState < 4) {
+						//
+					} else if (xhr.readyState === 4) {
+						if (xhr.status == 200 && xhr.status < 300) {
+							// Results received
+							console.log("Results received:", xhr.responseText);
+						
+							var responsJson = JSON.parse(xhr.responseText);
+						
+							var nativeImageWidth = responsJson.width;
+							var nativeImageHeight = responsJson.height;
+						
+							if(nativeImageWidth > 330){
+								nativeImageHeight *= (330 / nativeImageWidth);
+								nativeImageWidth = 330;
+							}
+							
+							document.getElementById("jpgHeader").innerHTML = "Final JPG (" + responsJson.fileSize + ")";
+
+							// Display returned JPG image
+							document.getElementById("finalJpg").innerHTML = "<img width='" + (nativeImageWidth * 2) + "' height='" + nativeImageHeight + "' src='" + responsJson.newFilePath + "'>";
+						
+							// Check for existing SVG, and destroy it if present
+							if(document.getElementById("final_svg")){							
+								var div = document.getElementById("final_svg");
+								div.parentNode.removeChild(div);	
+							}
+						
+							// Create the SVG Object
+							// Methodology described here:
+							// http://w3.eleqtriq.com/2014/08/applying-alpha-channels-to-jpgs/
+							var xmlns = "http://www.w3.org/2000/svg";
+
+							var finalSvg = document.createElementNS(xmlns, "svg");
+							finalSvg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+							finalSvg.setAttribute("id", "final_svg");
+							finalSvg.setAttribute("width", nativeImageWidth);
+							finalSvg.setAttribute("height", nativeImageHeight);
+
+							// Define SVG's stylesheet; this is how the grey-scale portion of the image is applied as a mask
+							var svgStyle = document.createElement("style");
+							svgStyle.setAttribute("type", "text/css");
+							svgStyle.innerHTML = "#svg_use{ mask: url(#svg_mask); }";
+
+							finalSvg.appendChild(svgStyle);
+
+							// Create a Symbol Object to hold composite image Object
+							//var svgSymbol = document.createElement("symbol");
+							var svgSymbol = document.createElementNS(xmlns, "symbol");
+							svgSymbol.setAttribute("id", "svg_symbol");
+
+							finalSvg.appendChild(svgSymbol);
+
+							// Create composite image Object; this is the source image for our SVG
+							var svgImage = document.createElementNS(xmlns, "image");
+							svgImage.setAttribute("id", "svg_image");
+							svgImage.setAttribute("width", (nativeImageWidth * 2));
+							svgImage.setAttribute("height", nativeImageHeight);
+							svgImage.setAttributeNS("http://www.w3.org/1999/xlink", "href", responsJson.newFilePath);
+
+							svgSymbol.appendChild(svgImage);
+
+							// Create a mask Object to hold mask "use" Object
+							var svgMask = document.createElementNS(xmlns, "mask");
+							svgMask.setAttribute("id", "svg_mask");
+
+							finalSvg.appendChild(svgMask);
+
+							// Create SVG mask "use" Object; this defines our mask
+							var svgMaskUse = document.createElementNS(xmlns, "use");
+							svgMaskUse.setAttribute("id", "svg_mask_use");
+							svgMaskUse.setAttributeNS("http://www.w3.org/1999/xlink", "href", "#svg_symbol");
+							svgMaskUse.setAttribute("width", (nativeImageWidth * 2));
+							svgMaskUse.setAttribute("height", nativeImageHeight);
+							svgMaskUse.setAttribute("x", 0 - nativeImageWidth);
+							svgMaskUse.setAttribute("y", "0");
+							svgMaskUse.setAttribute("style", "overflow:hidden");
+
+							svgMask.appendChild(svgMaskUse);
+
+							// Create "use" Object for image
+							var svgUse = document.createElementNS(xmlns, "use");
+							svgUse.setAttribute("id", "svg_use");
+							svgUse.setAttributeNS("http://www.w3.org/1999/xlink", "href", "#svg_symbol");
+							svgUse.setAttribute("width", nativeImageWidth);
+							svgUse.setAttribute("height", nativeImageHeight);
+							svgUse.setAttribute("style", "overflow:hidden");
+
+							finalSvg.appendChild(svgUse);
+
+							// Attach SVG to document
+							document.getElementById("finalSvg").appendChild(finalSvg);
+						
+							// Make results and color picker visible
+							document.getElementById("results").style.display = "inline";
+							document.getElementById("colorPickerDiv").style.display = "inline";
+						}
+					}
+				}
+			
+				var formElement = document.getElementById("uploadForm");
+
+				xhr.open('post', '/file-upload');
+				xhr.send(new FormData(document.uploadForm));
+			}
+
+	    </script>
+
+	</head>
+	<body>
+
+		<h1>Node.js / S3 / SVG Investigation</h1>
+		
+		<div id="controls">
+			
+			<div id="formDiv">
+				
+				<p>To begin, select a PNG that contains transparent elements:</p>
+		
+				<form id="uploadForm" name="uploadForm" method="post" enctype="multipart/form-data" action="javascript:uploadFile()">
+		
+					<label for="file">Filename:</label>
+					<input type="file" name="file" class="fileInput"><br>
+					JPG Quality: <input id="rangeSlider" type="range" name="compression" value="70" step="1" min="1" max="100"> <span id="compressionAmount">70</span>
+					<input type="submit" name="submit" value="Upload" class="searchButton">
+			
+				</form>
+			
+			</div>
+			
+			<div id="colorPickerDiv">
+				
+				<p>Use the color picker below to alter the page's background color:</p>
+				
+				<canvas id="colorPicker" width="455" height="70">
+		            <!-- Insert fallback content here -->
+		        </canvas>
+		
+			</div>
+
+		</div>
+		
+		<div id="results">
+			
+			<div class="finalParentDiv" id="jpgDiv">
+
+				<h2 id="jpgHeader">Final JPG</h2>
+
+				<div id="finalJpg">
+
+				</div>
+			
+			</div>
+			
+			<div class="finalParentDiv" id="svgDiv">
+
+				<h2 id="svgHeader">Final SVG</h2>
+
+				<div id="finalSvg" class="imageBorder">
+
+				</div>
+			
+			</div>
+
+		</div>
+
+	</body>
+</html>

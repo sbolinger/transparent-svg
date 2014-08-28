@@ -1,0 +1,30 @@
+{
+  "name": "nodejs-svg-s3-investigation",
+  "version": "0.1.0",
+  "description": "A simple implemtation of S3-delivered transparent images via SVG.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.0.15",
+    "formidable": "^1.0.15",
+    "images": "^2.0.2",
+    "pngjs": "^0.4.0"
+  },
+  "engines": {
+    "node": "0.10.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sbolinger/nodejs-svg-s3-investigation"
+  },
+  "keywords": [
+	"node",
+	"heroku",
+    "SVG",
+    "S3"
+  ],
+  "author": "steven bolinger",
+  "license": "MIT"
+}
