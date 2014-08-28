@@ -180,7 +180,7 @@ function modifyPixels(){
     }
 
 	// Save modified PNG to temp directory ('uploads')
-	var tempFile = fs.createWriteStream("./uploads/" + this.ver + "_" + this.fileName);
+	var tempFile = fs.createWriteStream("./" + this.ver + "_" + this.fileName);
 	
 	this.pack().pipe(tempFile);
 	
@@ -207,15 +207,15 @@ function finalizeJpg(){
 		
 		var compositeImage = images(this.width *2, this.height).fill(0xff, 0xff, 0xff);
 		
-		compositeImage.draw(images("./uploads/orig_" + this.fileName), 0, 0);
+		compositeImage.draw(images("./orig_" + this.fileName), 0, 0);
 		
-		compositeImage.draw(images("./uploads/mask_" + this.fileName), this.width, 0);
+		compositeImage.draw(images("./mask_" + this.fileName), this.width, 0);
 		
-		compositeImage.save("./uploads/" + newFileName, {quality : this.compression});
+		compositeImage.save("./" + newFileName, {quality : this.compression});
 		
 		// Clean up the temp PNGs
-		fs.unlink("./uploads/orig_" + this.fileName);
-		fs.unlink("./uploads/mask_" + this.fileName);
+		fs.unlink("./orig_" + this.fileName);
+		fs.unlink("./mask_" + this.fileName);
 		
 		// Upload JPG to S3 bucket
 		uploadFile(newFileName, this.width, this.height, this.res);
@@ -234,7 +234,7 @@ function uploadFile(fileName, width, height, res) {
 	
 	var s3 = new AWS.S3();
 	
-	var localFile = "./uploads/" + fileName;
+	var localFile = "./" + fileName;
 	
 	var remoteFilename = S3_FILE_PATH + fileName;
 	
@@ -264,7 +264,7 @@ function uploadFile(fileName, width, height, res) {
 				var fileSizeInKilobytes = (Math.round(fileSizeInBytes / 100) / 10) + " KB";
 				
 				// Clean up the temp JPG
-				fs.unlink("./uploads/" + fileName);
+				fs.unlink("./" + fileName);
 				
 				// Send response to requesting page				
 				res.writeHead(200, { 'Content-Type': 'application/json' });

@@ -1,7 +1,7 @@
 {
   "name": "nodejs-svg-s3-investigation",
   "version": "0.1.0",
-  "description": "A simple implemtation of S3-delivered transparent images via SVG.",
+  "description": "A simple implementation of S3-delivered transparent images via SVG.",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
