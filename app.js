@@ -59,7 +59,7 @@ http.createServer(function(req, res) {
 		var form = new formidable.IncomingForm();
 		
 		// Set file upload directory
-		form.uploadDir = "./uploads";
+		form.uploadDir = "./";
 
 		// Get form content and save any uploaded images into 'uploadDir'
 		form.parse(req, function(err, fields, files) {
@@ -179,7 +179,7 @@ function modifyPixels(){
         }
     }
 
-	// Save modified PNG to temp directory ('uploads')
+	// Temporarily save modified PNG
 	var tempFile = fs.createWriteStream("./" + this.ver + "_" + this.fileName);
 	
 	this.pack().pipe(tempFile);
