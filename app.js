@@ -11,8 +11,8 @@ var formidable = require("formidable");
 var AWS = require("aws-sdk");
 AWS.config.region = "us-east-1";
 
-var port = 8888;
-var serverUrl = "127.0.0.1";
+var port = (process.env.PORT || 8080);
+//var serverUrl = "127.0.0.1";
 
 var S3_BUCKET_NAME = "files.flite.com";
 var S3_FILE_PATH = "ad/bolinger/";
@@ -135,7 +135,7 @@ http.createServer(function(req, res) {
 			res.end();
 		}
 	}
-}).listen(port, serverUrl);
+}).listen(port); //, serverUrl);
 
 // Function that returns file requests
 function getFile(localPath, res, mimeType) {

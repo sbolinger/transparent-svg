@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "A simple implementation of S3-delivered transparent images via SVG.",
   "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
   "dependencies": {
     "aws-sdk": "^2.0.15",
     "formidable": "^1.0.15",
