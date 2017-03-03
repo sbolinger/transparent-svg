@@ -19,20 +19,6 @@ var S3_FILE_PATH = "ad/bolinger/";
 
 var imagesPrepared = 0;
 
-/*
-
-	QUESTIONS
-
-	1) Am I handling callback function in a 'kosher' way?
-
-	2) Is attaching properties to the Object (e.g. 'fileName') an appropriate way to pass values to callback functions?
-
-	3) For file upload handling, how do I not make the browser navigate to 'file-upload'?
-
-	4) How to track asynchronous events (e.g. multiple calls to 'finalizeJpg') function without 'imagesPrepared' variable?
-	
-*/
-
 http.createServer(function(req, res) {
 	var filename = req.url || "/index.html";
 
